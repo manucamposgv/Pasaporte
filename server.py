@@ -18,6 +18,8 @@ import json
 import logging
 import os
 import re
+import time
+from collections import defaultdict, deque
 from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -31,6 +33,26 @@ from app.grafo import PATRON_FUENTE, construir_grafo
 
 log = logging.getLogger("pasaporte")
 MAX_HISTORIAL = 6  # turnos previos que se mandan al grafo como contexto
+
+# Límite de preguntas por visitante y hora, para que una web pública no agote
+# la cuota gratuita de Groq. 0 = sin límite (variable LIMITE_PREGUNTAS_HORA).
+LIMITE_HORA = int(os.getenv("LIMITE_PREGUNTAS_HORA", "30"))
+_preguntas: dict[str, deque] = defaultdict(deque)
+
+
+def _dentro_del_limite(request: Request) -> bool:
+    if LIMITE_HORA <= 0:
+        return True
+    # Detrás del proxy de Hugging Face, la IP real llega en X-Forwarded-For
+    directa = request.client.host if request.client else "?"
+    ip = (request.headers.get("x-forwarded-for") or directa).split(",")[0].strip()
+    ahora, cola = time.monotonic(), _preguntas[ip]
+    while cola and ahora - cola[0] > 3600:
+        cola.popleft()
+    if len(cola) >= LIMITE_HORA:
+        return False
+    cola.append(ahora)
+    return True
 
 
 @asynccontextmanager
@@ -100,6 +122,8 @@ async def salud(request: Request):
 async def chat(peticion: Peticion, request: Request):
     grafo = request.app.state.grafo
     error = request.app.state.error
+    if not _dentro_del_limite(request):
+        grafo, error = None, f"Has llegado al límite de {LIMITE_HORA} preguntas por hora. Vuelve a probar más tarde."
 
     mensajes = []
     for turno in peticion.historial[-MAX_HISTORIAL:]:

@@ -1,4 +1,18 @@
+---
+title: Pasaporte
+emoji: 🛂
+colorFrom: red
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+short_description: Copiloto de intercambio con LangGraph, RAG y MCP
+---
+
 # Pasaporte · copiloto de intercambio universitario
+
+> **Pruébalo sin instalar nada:** <https://huggingface.co/spaces/TU_USUARIO_HF/pasaporte>
+> (la primera carga puede tardar un minuto si el Space estaba dormido).
 
 ## Qué es
 
@@ -79,6 +93,7 @@ pasaporte/
 │   └── index.html                # la web (HTML + CSS + JS, sin build)
 ├── server.py                     # FastAPI: GET /, GET /api/salud, POST /api/chat (SSE)
 ├── iniciar.bat                   # Windows: instala, hace la ingesta y abre la web
+├── Dockerfile                    # imagen para Hugging Face Spaces (puerto 7860)
 ├── main.py                       # preguntar desde la consola
 ├── probar_mcp.py                 # probar el servidor MCP solo
 ├── requirements.txt
@@ -220,6 +235,18 @@ Las respuestas simuladas son mecánicas: sirven para comprobar que todo está co
 | `400 There was an error parsing the body` al probar con `curl` en Windows | La consola manda el JSON con otra codificación | Guarda el cuerpo en un fichero UTF-8 y usa `--data-binary @cuerpo.json` |
 | Los cambios en `docs/` no se ven en la web | El servidor MCP abrió ChromaDB al arrancar | Repite la ingesta y reinicia `uvicorn` |
 | La web carga sin estilos tipográficos | Sin internet no llegan las fuentes de Google Fonts | No afecta al funcionamiento; se usan fuentes del sistema |
+
+## Publicarlo en Hugging Face Spaces
+
+GitHub guarda el código, pero no ejecuta Python. Para tener un enlace que funcione sin instalar nada, el proyecto incluye un `Dockerfile` para [Hugging Face Spaces](https://huggingface.co/spaces) (gratis):
+
+1. Crea un Space en <https://huggingface.co/new-space> con **SDK: Docker** (plantilla *Blank*) y hardware gratuito (*CPU basic*).
+2. En el Space, **Settings → Variables and secrets**:
+   - **New secret**: `GROQ_API_KEY` con tu clave de Groq.
+   - (Opcional) **New variable**: `MODELO` (por defecto `groq:openai/gpt-oss-120b`) y `LIMITE_PREGUNTAS_HORA` (por defecto 30 por visitante; 0 = sin límite).
+3. Sube los ficheros del proyecto al Space (con `git push` o con `hf upload TU_USUARIO_HF/pasaporte . --repo-type space`). Hugging Face construye la imagen: instala las dependencias, hace la ingesta y arranca `uvicorn` en el puerto 7860.
+
+El bloque `---` del principio de este README es la configuración que lee Hugging Face (`sdk: docker`, `app_port: 7860`). Como la web es pública y usa tu clave, `server.py` limita las preguntas por visitante y hora.
 
 ## Por qué no funciona en GitHub Pages
 
