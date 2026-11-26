@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pasaporte · copiloto de intercambio</title>
+<meta name="description" content="Copiloto del intercambio en Lakeshore University: normativa, alojamiento, llegada y cuentas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --papel: #f3ecdc;
+  --papel-2: #ebe2cc;
+  --tarjeta: #fbf7ee;
+  --tinta: #1d2433;
+  --tinta-2: #4b5468;
+  --tinta-3: #7d8496;
+  --linea: #d6cbb1;
+  --rojo: #b8432f;
+  --azul: #1f4e79;
+  --ocre: #b9862a;
+  --verde: #3d6b4f;
+  --sombra: 0 1px 0 rgba(29,36,51,.06), 0 12px 32px -18px rgba(29,36,51,.35);
+  --grano: .05;
+  --serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papel: #0d1626; --papel-2: #121d31; --tarjeta: #16233a;
+    --tinta: #ece5d3; --tinta-2: #b4b9c6; --tinta-3: #7f889c; --linea: #2a3a57;
+    --rojo: #ec7a63; --azul: #8cb8e6; --ocre: #e2b55a; --verde: #8fc5a1;
+    --sombra: 0 1px 0 rgba(0,0,0,.3), 0 16px 40px -20px rgba(0,0,0,.8);
+    --grano: .035; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --papel: #0d1626; --papel-2: #121d31; --tarjeta: #16233a;
+  --tinta: #ece5d3; --tinta-2: #b4b9c6; --tinta-3: #7f889c; --linea: #2a3a57;
+  --rojo: #ec7a63; --azul: #8cb8e6; --ocre: #e2b55a; --verde: #8fc5a1;
+  --sombra: 0 1px 0 rgba(0,0,0,.3), 0 16px 40px -20px rgba(0,0,0,.8);
+  --grano: .035; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--papel);
+  color: var(--tinta);
+  font: 15px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* grano de papel */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: var(--grano);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.envoltura { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; overflow-x: clip; }
+.mono { font-family: var(--mono); }
+.etiqueta { font: 500 10.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--tinta-3); }
+
+/* ------------------------------------------------ cabecera */
+.barra {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 0; border-bottom: 1px dashed var(--linea);
+}
+.marca { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.marca svg { width: 30px; height: 30px; color: var(--rojo); }
+.marca b { font: 700 19px/1 var(--serif); letter-spacing: .02em; }
+.marca span { font: 500 10px/1 var(--mono); letter-spacing: .16em; color: var(--tinta-3); display: block; margin-top: 4px; }
+.barra-der { display: flex; align-items: center; gap: 10px; }
+.salud {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px;
+  border: 1px solid var(--linea); font: 500 11px/1 var(--mono); color: var(--tinta-2); background: var(--tarjeta);
+  max-width: 46vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.salud i { width: 7px; height: 7px; border-radius: 50%; background: var(--tinta-3); flex: none; }
+.salud.ok i { background: var(--verde); box-shadow: 0 0 0 3px color-mix(in srgb, var(--verde) 25%, transparent); }
+.salud.mal i { background: var(--rojo); }
+.boton-icono {
+  width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px;
+  border: 1px solid var(--linea); background: var(--tarjeta); color: var(--tinta); cursor: pointer;
+}
+.boton-icono:hover { border-color: var(--tinta-3); }
+.boton-icono svg { width: 18px; height: 18px; }
+.sol { display: none; } .luna { display: block; }
+:root[data-theme="dark"] .sol { display: block; } :root[data-theme="dark"] .luna { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sol { display: block; }
+  :root:not([data-theme="light"]) .luna { display: none; }
+}
+
+/* ------------------------------------------------ hero */
+.hero { display: grid; grid-template-columns: 1fr 1.25fr; gap: 40px; align-items: center; padding: 44px 0 36px; }
+.hero h1 { font: 700 clamp(34px, 4.6vw, 54px)/1.02 var(--serif); letter-spacing: -.01em; margin: 14px 0 16px; }
+.hero h1 em { font-style: normal; color: var(--rojo); }
+.hero p { color: var(--tinta-2); max-width: 46ch; margin: 0 0 22px; font-size: 16px; }
+.pasos { display: flex; flex-wrap: wrap; gap: 8px; }
+.paso {
+  font: 500 11px/1 var(--mono); letter-spacing: .06em; padding: 7px 10px; border-radius: 6px;
+  border: 1px solid var(--linea); color: var(--tinta-2); background: color-mix(in srgb, var(--tarjeta) 70%, transparent);
+}
+.paso b { color: var(--tinta); font-weight: 600; }
+
+.billete {
+  position: relative; display: grid; grid-template-columns: 1fr 150px; background: var(--tarjeta);
+  border-radius: 18px; box-shadow: var(--sombra); border: 1px solid var(--linea);
+  transform: rotate(-1.2deg);
+}
+.billete::before, .billete::after { /* muescas de la perforación */
+  content: ""; position: absolute; right: 141px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--papel); border: 1px solid var(--linea);
+}
+.billete::before { top: -10px; clip-path: inset(50% 0 0 0); }
+.billete::after { bottom: -10px; clip-path: inset(0 0 50% 0); }
+.billete-cuerpo { padding: 20px 24px 22px; }
+.billete-talon { border-left: 2px dashed var(--linea); padding: 20px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+.billete-cab { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; border-bottom: 1px solid var(--linea); }
+.billete-cab .linea-aerea { font: 600 12px/1 var(--mono); letter-spacing: .18em; color: var(--azul); }
+.ruta { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 18px 0 14px; }
+.ciudad b { display: block; font: 600 44px/1 var(--mono); letter-spacing: .02em; }
+.ciudad span { font: 500 11px/1.3 var(--mono); color: var(--tinta-3); letter-spacing: .04em; }
+.ciudad.dest { text-align: right; }
+.trayecto { position: relative; height: 22px; color: var(--tinta-3); }
+.trayecto::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dotted var(--linea); }
+.trayecto svg { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; transform: translate(-50%,-50%); color: var(--rojo); background: var(--tarjeta); padding: 0 2px; box-sizing: content-box; }
+.campos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding-top: 14px; border-top: 1px solid var(--linea); }
+.campo b { display: block; font: 600 15px/1.2 var(--mono); margin-top: 6px; }
+.codigo-barras { width: 100%; height: 54px; color: var(--tinta); }
+.talon-dato b { display: block; font: 600 13px/1.2 var(--mono); margin-top: 5px; }
+
+.sello {
+  position: absolute; pointer-events: none; color: var(--rojo); opacity: .78; mix-blend-mode: multiply;
+}
+:root[data-theme="dark"] .sello { mix-blend-mode: screen; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sello { mix-blend-mode: screen; } }
+.sello-hero { width: 112px; height: 112px; right: 18px; bottom: -48px; transform: rotate(-14deg); }
+
+/* ------------------------------------------------ zona principal */
+.principal { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.panel {
+  background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 16px; box-shadow: var(--sombra);
+}
+.panel-cab { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px dashed var(--linea); gap: 10px; }
+.panel-cab h2 { margin: 0; font: 700 18px/1.2 var(--serif); }
+
+/* chat */
+.chat { display: flex; flex-direction: column; height: min(74vh, 760px); min-height: 520px; }
+.mensajes { flex: 1; overflow-y: auto; padding: 20px 18px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+.vacio { margin: auto 0; text-align: left; padding: 8px 4px; }
+.vacio h3 { font: 700 22px/1.2 var(--serif); margin: 6px 0 6px; }
+.vacio p { color: var(--tinta-2); margin: 0 0 16px; }
+.sugerencias { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sugerencia {
+  text-align: left; cursor: pointer; border: 1px solid var(--linea); background: var(--papel); color: var(--tinta);
+  border-radius: 12px; padding: 12px 14px; font: 14px/1.4 var(--sans); transition: border-color .15s, transform .15s;
+}
+.sugerencia:hover { border-color: var(--azul); transform: translateY(-1px); }
+.sugerencia .etiqueta { display: block; margin-bottom: 6px; }
+.sugerencia[data-tipo="doc"] .etiqueta { color: var(--azul); }
+.sugerencia[data-tipo="calc"] .etiqueta { color: var(--ocre); }
+.sugerencia[data-tipo="mix"] .etiqueta { color: var(--rojo); }
+
+.msg { max-width: 88%; }
+.msg-yo { align-self: flex-end; }
+.msg-yo .burbuja {
+  background: var(--tinta); color: var(--papel); border-radius: 14px 14px 4px 14px; padding: 10px 14px;
+}
+.msg-bot { align-self: flex-start; }
+.msg-bot .autor { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.msg-bot .autor svg { width: 16px; height: 16px; color: var(--rojo); }
+.msg-bot .burbuja { border-left: 3px solid var(--azul); padding: 2px 0 2px 14px; }
+.burbuja p { margin: 0 0 10px; } .burbuja p:last-child { margin-bottom: 0; }
+.burbuja ul, .burbuja ol { margin: 0 0 10px; padding-left: 20px; }
+.burbuja li { margin: 3px 0; }
+.burbuja code { font: 13px var(--mono); background: var(--papel-2); padding: 1px 5px; border-radius: 4px; }
+.burbuja strong { font-weight: 600; }
+.burbuja table { border-collapse: collapse; font: 13px var(--mono); margin: 4px 0 10px; }
+.burbuja th, .burbuja td { border: 1px solid var(--linea); padding: 4px 8px; text-align: left; }
+.cita {
+  display: inline-block; font: 600 10.5px/1 var(--mono); letter-spacing: .04em; color: var(--rojo);
+  border: 1.5px solid currentColor; border-radius: 4px; padding: 3px 5px; margin: 0 1px; transform: rotate(-2deg);
+  vertical-align: 1px; white-space: nowrap;
+}
+.cursor::after { content: "▍"; color: var(--rojo); animation: parpadeo 1s steps(2) infinite; margin-left: 1px; }
+@keyframes parpadeo { 50% { opacity: 0; } }
+.pensando { display: inline-flex; gap: 8px; align-items: center; color: var(--tinta-3); font: 12px var(--mono); }
+.pensando i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: bote 1.2s infinite; }
+.pensando i:nth-child(2) { animation-delay: .15s; } .pensando i:nth-child(3) { animation-delay: .3s; }
+@keyframes bote { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.sellos-msg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.error-msg { color: var(--rojo); font: 13px/1.5 var(--mono); border: 1px dashed var(--rojo); border-radius: 10px; padding: 10px 12px; }
+
+.entrada { display: flex; gap: 10px; padding: 14px; border-top: 1px dashed var(--linea); }
+.entrada textarea {
+  flex: 1; resize: none; overflow-y: hidden; min-height: 46px; max-height: 160px; border-radius: 12px; border: 1px solid var(--linea);
+  background: var(--papel); color: var(--tinta); padding: 12px 14px; font: 15px/1.4 var(--sans);
+}
+.entrada textarea:focus, .sugerencia:focus-visible, .boton-icono:focus-visible, .enviar:focus-visible {
+  outline: 2px solid var(--azul); outline-offset: 2px;
+}
+.enviar {
+  border: 0; border-radius: 12px; padding: 0 18px; cursor: pointer; background: var(--rojo); color: #fff8ef;
+  font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; display: flex; align-items: center; gap: 8px;
+}
+.enviar:disabled { opacity: .45; cursor: default; }
+.enviar svg { width: 16px; height: 16px; }
+
+/* panel del grafo */
+.grafo { position: sticky; top: 16px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; }
+.grafo-plegar { display: none; }
+.grafo-cuerpo { overflow-y: auto; padding: 16px 18px 20px; }
+.mapa { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 0 14px; margin-bottom: 14px; border-bottom: 1px dashed var(--linea); }
+.mapa .n {
+  font: 600 10px/1 var(--mono); letter-spacing: .08em; padding: 6px 6px; border-radius: 6px; border: 1px solid var(--linea);
+  color: var(--tinta-3); transition: all .2s; text-transform: uppercase;
+}
+.mapa .n.activo { color: var(--papel); background: var(--c, var(--tinta)); border-color: var(--c, var(--tinta)); }
+.mapa .flecha { color: var(--tinta-3); font: 12px var(--mono); }
+.linea-tiempo { list-style: none; margin: 0; padding: 0; position: relative; }
+.linea-tiempo::before { content: ""; position: absolute; left: 13px; top: 6px; bottom: 6px; border-left: 1.5px dashed var(--linea); }
+.pregunta-grupo { font: 600 11px/1.4 var(--mono); color: var(--tinta-2); padding: 0 0 10px 34px; position: relative; }
+.pregunta-grupo::before { content: "✈"; position: absolute; left: 6px; top: -1px; color: var(--tinta-3); background: var(--tarjeta); font-size: 12px; }
+.evento { position: relative; padding: 0 0 16px 34px; animation: entrar .3s ease-out; }
+@keyframes entrar { from { opacity: 0; transform: translateY(4px); } }
+.evento .punto {
+  position: absolute; left: 4px; top: 1px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--tarjeta); border: 1.5px solid var(--c); color: var(--c); font: 700 9px/1 var(--mono);
+}
+.evento.en-curso .punto { background: var(--c); color: var(--tarjeta); animation: latido 1.4s infinite; }
+@keyframes latido { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 20%, transparent); } }
+.evento .cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.evento .nombre { font: 600 12px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.evento .hora { font: 11px var(--mono); color: var(--tinta-3); }
+.evento .texto { font-size: 13px; color: var(--tinta-2); margin-top: 4px; overflow-wrap: anywhere; }
+.evento .texto b { color: var(--tinta); font-weight: 600; }
+.evento details { margin-top: 6px; }
+.evento summary { cursor: pointer; font: 500 11px var(--mono); color: var(--tinta-3); letter-spacing: .04em; }
+.evento details p { font-size: 12.5px; color: var(--tinta-2); margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.c-supervisor { --c: var(--tinta); } .c-documentalista { --c: var(--azul); } .c-calculadora { --c: var(--ocre); } .c-responder { --c: var(--rojo); }
+.sellos { display: flex; flex-wrap: wrap; gap: 10px 8px; margin-top: 10px; }
+.sello-fuente {
+  font: 600 10px/1.1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--rojo);
+  border: 2px solid currentColor; outline: 1px solid currentColor; outline-offset: 2px; border-radius: 6px;
+  padding: 5px 7px; transform: rotate(var(--r, -3deg)); opacity: .9; animation: estampar .35s cubic-bezier(.2,1.6,.4,1);
+}
+.sello-fuente:nth-child(3n+2) { --r: 2.5deg; color: var(--azul); }
+.sello-fuente:nth-child(3n) { --r: -1deg; color: var(--verde); }
+@keyframes estampar { from { transform: scale(1.6) rotate(var(--r, -3deg)); opacity: 0; } }
+.grafo-vacio { color: var(--tinta-3); font-size: 13px; padding: 4px 0 0; }
+
+.pie { margin-top: 28px; padding-top: 16px; border-top: 1px dashed var(--linea); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.pie p { margin: 0; font: 11px/1.5 var(--mono); color: var(--tinta-3); }
+
+/* ------------------------------------------------ responsive */
+@media (max-width: 980px) {
+  .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 28px; }
+  .principal { grid-template-columns: 1fr; }
+  .grafo { position: static; max-height: none; order: -1; }
+  .grafo-plegar { display: grid; }
+  .grafo.plegado .grafo-cuerpo { display: none; }
+  .grafo.plegado .panel-cab { border-bottom: 0; }
+}
+@media (max-width: 640px) {
+  .envoltura { padding: 0 16px 32px; }
+  .salud { display: none; }
+  .billete { grid-template-columns: 1fr; transform: none; }
+  .billete::before, .billete::after { display: none; }
+  .billete-talon { border-left: 0; border-top: 2px dashed var(--linea); flex-direction: row; align-items: end; }
+  .codigo-barras { height: 40px; }
+  .billete-cab .etiqueta { display: none; }
+  .talon-dato b { white-space: nowrap; }
+  .ciudad b { font-size: 34px; }
+  .campos { grid-template-columns: repeat(2, 1fr); }
+  .sello-hero { width: 88px; height: 88px; right: 8px; bottom: auto; top: -44px; }
+  .sugerencias { grid-template-columns: 1fr; }
+  .chat { height: 78vh; min-height: 460px; }
+  .msg { max-width: 100%; }
+  .enviar span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="envoltura">
+
+  <header class="barra">
+    <a class="marca" href="#" aria-label="Pasaporte, inicio">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <rect x="6" y="3" width="20" height="26" rx="3"/><circle cx="16" cy="14" r="5"/><path d="M11 14h10M16 9c-2 2.5-2 7.5 0 10M16 9c2 2.5 2 7.5 0 10M11 23h10"/>
+      </svg>
+      <div><b>PASAPORTE</b><span>COPILOTO DE INTERCAMBIO</span></div>
+    </a>
+    <div class="barra-der">
+      <span class="salud" id="salud" title="Estado del backend"><i></i><span>conectando…</span></span>
+      <button class="boton-icono" id="tema" type="button" aria-label="Cambiar entre modo claro y oscuro">
+        <svg class="luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <svg class="sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero" aria-labelledby="titulo">
+    <div>
+      <span class="etiqueta">Lakeshore University · semestre de intercambio</span>
+      <h1 id="titulo">Tu intercambio, <em>sin turbulencias</em>.</h1>
+      <p>Pregunta por la normativa, el alojamiento o la llegada a Port Alder, y deja que Pasaporte haga las cuentas de créditos, notas y presupuesto. Cada dato sale de los documentos oficiales del programa y lleva su sello de origen.</p>
+      <div class="pasos">
+        <span class="paso"><b>Supervisor</b> decide</span>
+        <span class="paso"><b>Documentalista</b> busca (RAG · MCP)</span>
+        <span class="paso"><b>Calculadora</b> cuenta</span>
+      </div>
+    </div>
+
+    <div class="billete" role="img" aria-label="Tarjeta de embarque: Madrid a Port Alder, Lakeshore University">
+      <div class="billete-cuerpo">
+        <div class="billete-cab">
+          <span class="linea-aerea">BOARDING PASS · EXCHANGE</span>
+          <span class="etiqueta">Clase · Erasmus+</span>
+        </div>
+        <div class="ruta">
+          <div class="ciudad"><span>ORIGEN</span><b>MAD</b><span>Universidad de origen</span></div>
+          <div class="trayecto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V8.5l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" transform="rotate(90 12 12)"/></svg></div>
+          <div class="ciudad dest"><span>DESTINO</span><b>LKS</b><span>Port Alder · Lakeshore U.</span></div>
+        </div>
+        <div class="campos">
+          <div class="campo"><span class="etiqueta">Puerta</span><b>ISO-3</b></div>
+          <div class="campo"><span class="etiqueta">Embarque</span><b>AGO 27</b></div>
+          <div class="campo"><span class="etiqueta">Asiento</span><b>12 US</b></div>
+          <div class="campo"><span class="etiqueta">Equivale</span><b>24 ECTS</b></div>
+        </div>
+      </div>
+      <div class="billete-talon">
+        <div class="talon-dato"><span class="etiqueta">Pasajero</span><b>ESTUDIANTE</b></div>
+        <div class="talon-dato"><span class="etiqueta">Vuelo</span><b>PX-2027</b></div>
+        <svg class="codigo-barras" id="barras" viewBox="0 0 118 54" preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+      <svg class="sello sello-hero" viewBox="0 0 120 120" aria-hidden="true">
+        <defs><path id="circ" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1-88 0"/></defs>
+        <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="3"/>
+        <circle cx="60" cy="60" r="33" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" letter-spacing="2.6" fill="currentColor"><textPath href="#circ">LAKESHORE UNIVERSITY · PORT ALDER ·</textPath></text>
+        <text x="60" y="57" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="currentColor">ADMITIDO</text>
+        <text x="60" y="71" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8.5" fill="currentColor">AGO 2027</text>
+      </svg>
+    </div>
+  </section>
+
+  <main class="principal">
+    <section class="panel chat" aria-label="Chat con Pasaporte">
+      <div class="panel-cab">
+        <h2>Mostrador de información</h2>
+        <button class="boton-icono" id="nuevo" type="button" aria-label="Nueva conversación" title="Nueva conversación">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="mensajes" id="mensajes" aria-live="polite">
+        <div class="vacio" id="vacio">
+          <span class="etiqueta">Antes de despegar</span>
+          <h3>¿Qué quieres saber de tu intercambio?</h3>
+          <p>Prueba con una de estas preguntas o escribe la tuya.</p>
+          <div class="sugerencias">
+            <button class="sugerencia" data-tipo="mix" type="button"><span class="etiqueta">Documentalista + calculadora</span>Voy a cursar 4 asignaturas de 3 créditos US. ¿Cuántos ECTS son y me llegan para el mínimo de mi universidad? ¿Y cuánto me costaría el semestre viviendo en la residencia más barata?</button>
+            <button class="sugerencia" data-tipo="doc" type="button"><span class="etiqueta">Documentalista</span>¿Qué plazo tengo para cambiar asignaturas del learning agreement?</button>
+            <button class="sugerencia" data-tipo="calc" type="button"><span class="etiqueta">Calculadora</span>Tengo un 7,8 sobre 10 de media. ¿Qué letra y GPA es en Lakeshore?</button>
+            <button class="sugerencia" data-tipo="doc" type="button"><span class="etiqueta">Documentalista</span>¿Qué seguro médico es obligatorio y cuánto cuesta?</button>
+          </div>
+        </div>
+      </div>
+      <form class="entrada" id="formulario">
+        <label for="pregunta" class="etiqueta" style="position:absolute;left:-9999px">Tu pregunta</label>
+        <textarea id="pregunta" rows="1" placeholder="Créditos, notas, alojamiento, visado…" autocomplete="off"></textarea>
+        <button class="enviar" id="enviar" type="submit">
+          <span>Embarcar</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </section>
+
+    <aside class="panel grafo" id="grafo" aria-label="Razonamiento del grafo">
+      <div class="panel-cab">
+        <div><span class="etiqueta">Cuaderno de bitácora</span><h2>Razonamiento del grafo</h2></div>
+        <button class="boton-icono grafo-plegar" id="plegar" type="button" aria-expanded="true" aria-controls="grafo-cuerpo" aria-label="Plegar o desplegar el panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="grafo-cuerpo" id="grafo-cuerpo">
+        <div class="mapa" aria-hidden="true">
+          <span class="n c-supervisor" data-n="supervisor">Sup</span><span class="flecha">→</span>
+          <span class="n c-documentalista" data-n="documentalista">Doc</span><span class="flecha">·</span>
+          <span class="n c-calculadora" data-n="calculadora">Calc</span><span class="flecha">→</span>
+          <span class="n c-responder" data-n="responder">Resp</span>
+        </div>
+        <ol class="linea-tiempo" id="linea"></ol>
+        <p class="grafo-vacio" id="grafo-vacio">Aquí verás qué nodo actúa, qué encargo le da el supervisor y qué documentos se sellan como fuente.</p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="pie">
+    <p>Lakeshore University, Port Alder y todos sus datos son ficticios.</p>
+    <p>LangGraph · ChromaDB · FastMCP · Groq</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const raiz = document.documentElement;
+
+  /* ---------- tema: sistema por defecto + interruptor manual ---------- */
+  const guardado = (() => { try { return localStorage.getItem("pasaporte-tema"); } catch { return null; } })();
+  if (guardado === "light" || guardado === "dark") raiz.dataset.theme = guardado;
+  $("#tema").addEventListener("click", () => {
+    const oscuroAhora = raiz.dataset.theme ? raiz.dataset.theme === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+    raiz.dataset.theme = oscuroAhora ? "light" : "dark";
+    try { localStorage.setItem("pasaporte-tema", raiz.dataset.theme); } catch {}
+  });
+
+  /* ---------- código de barras decorativo ---------- */
+  (() => {
+    let x = 0, semilla = 7, barras = "";
+    while (x < 118) {
+      semilla = (semilla * 9301 + 49297) % 233280;
+      const w = 1 + Math.floor((semilla / 233280) * 3.2);
+      barras += `<rect x="${x}" y="0" width="${w}" height="54" fill="currentColor"/>`;
+      x += w + 1 + Math.floor((semilla % 7) / 3);
+    }
+    $("#barras").innerHTML = barras;
+  })();
+
+  /* ---------- salud del backend ---------- */
+  // Abierta desde la carpeta (file://) habla con el servidor local; servida por él, con su propio origen
+  const API = location.protocol === "file:" ? "http://localhost:8000" : "";
+  const SIN_SERVIDOR = "El servidor no está arrancado. Haz doble clic en iniciar.bat (o ejecuta uvicorn server:app) y vuelve a preguntar; también puedes abrir http://localhost:8000.";
+  fetch(API + "/api/salud").then(r => r.json()).then(s => {
+    const el = $("#salud");
+    el.classList.add(s.ok ? "ok" : "mal");
+    el.lastElementChild.textContent = s.ok
+      ? `MCP · ${s.herramientas_mcp.join(", ")} · ${s.modelo.replace("groq:", "")}`
+      : "backend sin grafo";
+    el.title = s.ok ? `Embeddings: ${s.embeddings}` : (s.error || "");
+  }).catch(() => {
+    const el = $("#salud");
+    el.classList.add("mal");
+    el.lastElementChild.textContent = "servidor apagado · ejecuta iniciar.bat";
+    el.title = SIN_SERVIDOR;
+  });
+
+  /* ---------- panel plegable (móvil) ---------- */
+  const grafo = $("#grafo");
+  if (matchMedia("(max-width: 980px)").matches) grafo.classList.add("plegado");
+  const sincronizarPlegado = () => $("#plegar").setAttribute("aria-expanded", String(!grafo.classList.contains("plegado")));
+  sincronizarPlegado();
+  $("#plegar").addEventListener("click", () => { grafo.classList.toggle("plegado"); sincronizarPlegado(); });
+
+  /* ---------- markdown mínimo, con citas como sellos ---------- */
+  const esc = (t) => t.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function enLinea(t) {
+    return esc(t)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+      .replace(/\(?\b([\w-]+\.md)\b\)?/g, '<span class="cita">$1</span>');
+  }
+  function markdown(texto) {
+    const lineas = texto.replace(/\r/g, "").split("\n");
+    let html = "", lista = null, parrafo = [], tabla = [];
+    const cerrarParrafo = () => { if (parrafo.length) { html += `<p>${parrafo.map(enLinea).join("<br>")}</p>`; parrafo = []; } };
+    const cerrarLista = () => { if (lista) { html += `</${lista}>`; lista = null; } };
+    const cerrarTabla = () => {
+      if (!tabla.length) return;
+      const filas = tabla.filter(f => !/^\s*\|?\s*:?-{2,}/.test(f)).map(f => f.trim().replace(/^\||\|$/g, "").split("|"));
+      html += "<table>" + filas.map((f, i) => "<tr>" + f.map(c => i === 0 ? `<th>${enLinea(c.trim())}</th>` : `<td>${enLinea(c.trim())}</td>`).join("") + "</tr>").join("") + "</table>";
+      tabla = [];
+    };
+    for (const l of lineas) {
+      if (/^\s*\|.*\|\s*$/.test(l)) { cerrarParrafo(); cerrarLista(); tabla.push(l); continue; }
+      cerrarTabla();
+      const ul = l.match(/^\s*[-*•]\s+(.*)/), ol = l.match(/^\s*\d+[.)]\s+(.*)/);
+      if (ul || ol) {
+        cerrarParrafo();
+        const tipo = ul ? "ul" : "ol";
+        if (lista !== tipo) { cerrarLista(); html += `<${tipo}>`; lista = tipo; }
+        html += `<li>${enLinea((ul || ol)[1])}</li>`;
+      } else if (!l.trim()) { cerrarParrafo(); cerrarLista(); }
+      else if (/^#{1,6}\s/.test(l)) { cerrarParrafo(); cerrarLista(); html += `<p><strong>${enLinea(l.replace(/^#+\s*/, ""))}</strong></p>`; }
+      else { cerrarLista(); parrafo.push(l); }
+    }
+    cerrarParrafo(); cerrarLista(); cerrarTabla();
+    return html;
+  }
+
+  /* ---------- línea de tiempo ---------- */
+  const NOMBRES = { supervisor: "Supervisor", documentalista: "Documentalista", calculadora: "Calculadora", responder: "Responder" };
+  const INICIAL = { supervisor: "S", documentalista: "D", calculadora: "C", responder: "R" };
+  const hora = () => new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const linea = $("#linea");
+  const bajarGrafo = () => { const c = $("#grafo-cuerpo"); c.scrollTop = c.scrollHeight; };
+
+  function marcarMapa(nodo) {
+    document.querySelectorAll(".mapa .n").forEach(n => n.classList.toggle("activo", n.dataset.n === nodo));
+  }
+  function nuevoEvento(nodo, html, enCurso = false) {
+    $("#grafo-vacio").hidden = true;
+    const li = document.createElement("li");
+    li.className = `evento c-${nodo}${enCurso ? " en-curso" : ""}`;
+    li.innerHTML = `<span class="punto">${INICIAL[nodo] || "·"}</span>
+      <div class="cab"><span class="nombre">${NOMBRES[nodo] || esc(nodo)}</span><span class="hora">${hora()}</span></div>
+      <div class="texto">${html}</div>`;
+    linea.appendChild(li);
+    bajarGrafo();
+    marcarMapa(enCurso ? nodo : null);
+    return li;
+  }
+  function sellos(lista) {
+    return `<div class="sellos">${lista.map(f => `<span class="sello-fuente">${esc(f)}</span>`).join("")}</div>`;
+  }
+
+  /* ---------- chat ---------- */
+  const mensajes = $("#mensajes"), entrada = $("#pregunta"), enviar = $("#enviar");
+  let historial = [], ocupado = false;
+
+  function burbujaYo(texto) {
+    const d = document.createElement("div");
+    d.className = "msg msg-yo";
+    d.innerHTML = `<div class="burbuja">${esc(texto)}</div>`;
+    mensajes.appendChild(d);
+  }
+  function burbujaBot() {
+    const d = document.createElement("div");
+    d.className = "msg msg-bot";
+    d.innerHTML = `<div class="autor"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V8.5l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><span class="etiqueta">Pasaporte</span></div>
+      <div class="burbuja"><span class="pensando"><i></i><i></i><i></i> <span>el supervisor está decidiendo…</span></span></div>`;
+    mensajes.appendChild(d);
+    return d;
+  }
+  const bajar = () => { mensajes.scrollTop = mensajes.scrollHeight; };
+
+  async function preguntar(texto) {
+    if (ocupado || !texto.trim()) return;
+    ocupado = true; enviar.disabled = true;
+    $("#vacio")?.remove();
+    burbujaYo(texto);
+    const bot = burbujaBot();
+    const cuerpo = bot.querySelector(".burbuja");
+    const estado = bot.querySelector(".pensando span");
+    bajar();
+
+    const grupo = document.createElement("li");
+    grupo.className = "pregunta-grupo";
+    grupo.textContent = texto.length > 90 ? texto.slice(0, 90) + "…" : texto;
+    linea.appendChild(grupo);
+    $("#grafo-vacio").hidden = true;
+    let actual = nuevoEvento("supervisor", "Leyendo la pregunta…", true);
+
+    let acumulado = "", final = null, fuentes = [];
+    const pintar = (conCursor) => {
+      cuerpo.innerHTML = markdown(acumulado);
+      cuerpo.classList.toggle("cursor", conCursor);
+      bajar();
+    };
+    const cerrarActual = () => { if (actual) { actual.classList.remove("en-curso"); actual = null; } };
+
+    const manejar = {
+      decision(d) {
+        if (actual?.classList.contains("c-supervisor")) {
+          actual.querySelector(".texto").innerHTML = d.siguiente === "FIN"
+            ? "Hay información suficiente: <b>pasa a responder</b>."
+            : `Encarga a <b>${NOMBRES[d.siguiente]}</b>: ${esc(d.tarea)}`;
+        }
+        cerrarActual();
+        const siguiente = d.siguiente === "FIN" ? "responder" : d.siguiente;
+        actual = nuevoEvento(siguiente, siguiente === "responder" ? "Redactando la respuesta con los hallazgos…" : "Trabajando en el encargo…", true);
+        if (estado) estado.textContent = { documentalista: "consultando los documentos…", calculadora: "haciendo las cuentas…", responder: "redactando…" }[siguiente];
+      },
+      hallazgo(d) {
+        if (!actual) return;
+        const corto = d.texto.length <= 260;
+        actual.querySelector(".texto").innerHTML =
+          `<details${corto ? " open" : ""}><summary>Hallazgo · ${d.texto.length} caracteres</summary><p>${esc(d.texto)}</p></details>`;
+        bajarGrafo();
+      },
+      fuentes(d) {
+        if (actual) actual.querySelector(".texto").insertAdjacentHTML("beforeend", sellos(d.fuentes));
+        bajarGrafo();
+      },
+      nodo(d) {
+        if (d.nodo !== "supervisor" && d.nodo !== "responder") {
+          cerrarActual();
+          actual = nuevoEvento("supervisor", "Revisando lo recogido…", true);
+        }
+      },
+      token(d) { acumulado += d.texto; pintar(true); },
+      respuesta(d) { final = d.texto; fuentes = d.fuentes || []; },
+      error(d) {
+        cuerpo.innerHTML = `<div class="error-msg">⚠ ${esc(d.mensaje)}</div>`;
+        cerrarActual();
+        nuevoEvento("responder", `<span style="color:var(--rojo)">Error: ${esc(d.mensaje)}</span>`);
+        final = "";
+      },
+    };
+
+    try {
+      const r = await fetch(API + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensaje: texto, historial }),
+      });
+      if (!r.ok || !r.body) throw new Error(`HTTP ${r.status}`);
+      const lector = r.body.getReader(), dec = new TextDecoder();
+      let bufer = "";
+      for (;;) {
+        const { value, done } = await lector.read();
+        if (done) break;
+        bufer += dec.decode(value, { stream: true });
+        let corte;
+        while ((corte = bufer.indexOf("\n\n")) >= 0) {
+          const bloque = bufer.slice(0, corte); bufer = bufer.slice(corte + 2);
+          const tipo = (bloque.match(/^event: (.*)$/m) || [])[1];
+          const datos = (bloque.match(/^data: (.*)$/m) || [])[1];
+          if (tipo && manejar[tipo]) manejar[tipo](datos ? JSON.parse(datos) : {});
+        }
+      }
+    } catch (e) {
+      manejar.error({ mensaje: e instanceof TypeError ? SIN_SERVIDOR : `Error del servidor (${e.message}).` });
+    }
+
+    if (final) {
+      acumulado = final; pintar(false);
+      if (fuentes.length) cuerpo.insertAdjacentHTML("beforeend", `<div class="sellos-msg">${fuentes.map(f => `<span class="cita">${esc(f)}</span>`).join("")}</div>`);
+      if (actual) {
+        actual.querySelector(".texto").innerHTML = fuentes.length
+          ? `Respuesta enviada. Fuentes selladas:${sellos(fuentes)}` : "Respuesta enviada (sin documentos citados).";
+      }
+      historial.push({ rol: "usuario", texto }, { rol: "asistente", texto: final });
+    } else if (final === null && !cuerpo.querySelector(".error-msg")) {
+      cuerpo.innerHTML = `<div class="error-msg">La conexión se cerró sin respuesta.</div>`;
+    }
+    cuerpo.classList.remove("cursor");
+    cerrarActual(); marcarMapa(null);
+    ocupado = false; enviar.disabled = false; entrada.focus();
+  }
+
+  $("#formulario").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const t = entrada.value; entrada.value = ""; ajustar();
+    preguntar(t);
+  });
+  entrada.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#formulario").requestSubmit(); }
+  });
+  const ajustar = () => {
+    entrada.style.height = "auto";
+    entrada.style.height = Math.min(entrada.scrollHeight + 2, 160) + "px";
+    entrada.style.overflowY = entrada.scrollHeight > 160 ? "auto" : "hidden";
+  };
+  entrada.addEventListener("input", ajustar);
+  document.querySelectorAll(".sugerencia").forEach(b =>
+    b.addEventListener("click", () => preguntar(b.lastChild.textContent.trim())));
+  $("#nuevo").addEventListener("click", () => { if (!ocupado) location.reload(); });
+})();
+</script>
+</body>
+</html>
