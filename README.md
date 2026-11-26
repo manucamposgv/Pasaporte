@@ -11,7 +11,7 @@ short_description: Copiloto de intercambio con LangGraph, RAG y MCP
 
 # Pasaporte · copiloto de intercambio universitario
 
-> **Pruébalo sin instalar nada:** <https://huggingface.co/spaces/TU_USUARIO_HF/pasaporte>
+> **Pruébalo sin instalar nada:** <https://huggingface.co/spaces/manucamposgv/pasaporte>
 > (la primera carga puede tardar un minuto si el Space estaba dormido).
 
 ## Qué es
@@ -244,7 +244,7 @@ GitHub guarda el código, pero no ejecuta Python. Para tener un enlace que funci
 2. En el Space, **Settings → Variables and secrets**:
    - **New secret**: `GROQ_API_KEY` con tu clave de Groq.
    - (Opcional) **New variable**: `MODELO` (por defecto `groq:openai/gpt-oss-120b`) y `LIMITE_PREGUNTAS_HORA` (por defecto 30 por visitante; 0 = sin límite).
-3. Sube los ficheros del proyecto al Space (con `git push` o con `hf upload TU_USUARIO_HF/pasaporte . --repo-type space`). Hugging Face construye la imagen: instala las dependencias, hace la ingesta y arranca `uvicorn` en el puerto 7860.
+3. Sube los ficheros del proyecto al Space (con `git push` o con `hf upload manucamposgv/pasaporte . --repo-type space`). Hugging Face construye la imagen: instala las dependencias, hace la ingesta y arranca `uvicorn` en el puerto 7860.
 
 El bloque `---` del principio de este README es la configuración que lee Hugging Face (`sdk: docker`, `app_port: 7860`). Como la web es pública y usa tu clave, `server.py` limita las preguntas por visitante y hora.
 
