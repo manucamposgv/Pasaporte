@@ -196,6 +196,23 @@ body::before {
 .sellos-msg { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .error-msg { color: var(--rojo); font: 13px/1.5 var(--mono); border: 1px dashed var(--rojo); border-radius: 10px; padding: 10px 12px; }
 
+/* barra de la versión web (GitHub Pages): demo grabada o clave de Groq del visitante */
+.clave { padding: 12px 18px; border-bottom: 1px dashed var(--linea); background: color-mix(in srgb, var(--azul) 6%, transparent); font-size: 13px; color: var(--tinta-2); }
+.clave p { margin: 0 0 8px; }
+.clave b { color: var(--tinta); font-weight: 600; }
+.clave a { color: var(--azul); }
+.clave form { display: flex; gap: 8px; flex-wrap: wrap; }
+.clave input {
+  flex: 1 1 220px; min-width: 0; border: 1px solid var(--linea); border-radius: 8px; padding: 8px 10px;
+  background: var(--papel); color: var(--tinta); font: 13px var(--mono);
+}
+.clave button {
+  border: 1px solid var(--azul); background: transparent; color: var(--azul); border-radius: 8px; padding: 0 12px;
+  font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; min-height: 34px;
+}
+.clave .lista { display: none; }
+.clave.activa form, .clave.activa .pide { display: none; }
+.clave.activa .lista { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .entrada { display: flex; gap: 10px; padding: 14px; border-top: 1px dashed var(--linea); }
 .entrada textarea {
   flex: 1; resize: none; overflow-y: hidden; min-height: 46px; max-height: 160px; border-radius: 12px; border: 1px solid var(--linea);
@@ -359,6 +376,15 @@ body::before {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
+      <div class="clave" id="clave" hidden>
+        <p class="pide"><b>Versión web, sin servidor.</b> Las preguntas sugeridas reproducen respuestas reales grabadas del sistema completo. Para preguntar lo que quieras, pega una clave gratuita de Groq (<a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>): solo se envía a Groq y se borra al cerrar la pestaña.</p>
+        <form id="clave-form" autocomplete="off">
+          <label for="clave-input" style="position:absolute;left:-9999px">Clave de Groq</label>
+          <input id="clave-input" type="password" placeholder="gsk_…" spellcheck="false">
+          <button type="submit">Usar clave</button>
+        </form>
+        <div class="lista"><span><b>Clave de Groq activa:</b> el grafo se ejecuta en tu navegador.</span><button type="button" id="clave-quitar">Quitar</button></div>
+      </div>
       <div class="mensajes" id="mensajes" aria-live="polite">
         <div class="vacio" id="vacio">
           <span class="etiqueta">Antes de despegar</span>
@@ -440,7 +466,10 @@ body::before {
   // Abierta desde la carpeta (file://) habla con el servidor local; servida por él, con su propio origen
   const API = location.protocol === "file:" ? "http://localhost:8000" : "";
   const SIN_SERVIDOR = "El servidor no está arrancado. Haz doble clic en iniciar.bat (o ejecuta uvicorn server:app) y vuelve a preguntar; también puedes abrir http://localhost:8000.";
-  fetch(API + "/api/salud").then(r => r.json()).then(s => {
+  // modo "servidor": backend de Python (iniciar.bat / uvicorn).
+  // modo "web": página estática (GitHub Pages) sin backend: demo grabada o Groq desde el navegador.
+  let modo = "servidor";
+  const listo = fetch(API + "/api/salud").then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(s => {
     const el = $("#salud");
     el.classList.add(s.ok ? "ok" : "mal");
     el.lastElementChild.textContent = s.ok
@@ -448,6 +477,7 @@ body::before {
       : "backend sin grafo";
     el.title = s.ok ? `Embeddings: ${s.embeddings}` : (s.error || "");
   }).catch(() => {
+    if (location.protocol !== "file:") { activarModoWeb(); return; }
     const el = $("#salud");
     el.classList.add("mal");
     el.lastElementChild.textContent = "servidor apagado · ejecuta iniciar.bat";
@@ -544,6 +574,30 @@ body::before {
   }
   const bajar = () => { mensajes.scrollTop = mensajes.scrollHeight; };
 
+  /* Transporte 1: el backend de Python por SSE (POST /api/chat) */
+  async function viaServidor(texto, emitir) {
+    const r = await fetch(API + "/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensaje: texto, historial }),
+    });
+    if (!r.ok || !r.body) throw new Error(`HTTP ${r.status}`);
+    const lector = r.body.getReader(), dec = new TextDecoder();
+    let bufer = "";
+    for (;;) {
+      const { value, done } = await lector.read();
+      if (done) break;
+      bufer += dec.decode(value, { stream: true });
+      let corte;
+      while ((corte = bufer.indexOf("\n\n")) >= 0) {
+        const bloque = bufer.slice(0, corte); bufer = bufer.slice(corte + 2);
+        const tipo = (bloque.match(/^event: (.*)$/m) || [])[1];
+        const datos = (bloque.match(/^data: (.*)$/m) || [])[1];
+        if (tipo) emitir(tipo, datos ? JSON.parse(datos) : {});
+      }
+    }
+  }
+
   async function preguntar(texto) {
     if (ocupado || !texto.trim()) return;
     ocupado = true; enviar.disabled = true;
@@ -608,29 +662,14 @@ body::before {
       },
     };
 
+    const emitir = (tipo, datos) => manejar[tipo]?.(datos);
     try {
-      const r = await fetch(API + "/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensaje: texto, historial }),
-      });
-      if (!r.ok || !r.body) throw new Error(`HTTP ${r.status}`);
-      const lector = r.body.getReader(), dec = new TextDecoder();
-      let bufer = "";
-      for (;;) {
-        const { value, done } = await lector.read();
-        if (done) break;
-        bufer += dec.decode(value, { stream: true });
-        let corte;
-        while ((corte = bufer.indexOf("\n\n")) >= 0) {
-          const bloque = bufer.slice(0, corte); bufer = bufer.slice(corte + 2);
-          const tipo = (bloque.match(/^event: (.*)$/m) || [])[1];
-          const datos = (bloque.match(/^data: (.*)$/m) || [])[1];
-          if (tipo && manejar[tipo]) manejar[tipo](datos ? JSON.parse(datos) : {});
-        }
-      }
+      await listo;
+      if (modo === "web") await Web.preguntar(texto, historial, emitir);
+      else await viaServidor(texto, emitir);
     } catch (e) {
-      manejar.error({ mensaje: e instanceof TypeError ? SIN_SERVIDOR : `Error del servidor (${e.message}).` });
+      manejar.error({ mensaje: modo === "web" ? Web.explicar(e)
+        : e instanceof TypeError ? SIN_SERVIDOR : `Error del servidor (${e.message}).` });
     }
 
     if (final) {
@@ -666,6 +705,322 @@ body::before {
   document.querySelectorAll(".sugerencia").forEach(b =>
     b.addEventListener("click", () => preguntar(b.lastChild.textContent.trim())));
   $("#nuevo").addEventListener("click", () => { if (!ocupado) location.reload(); });
+
+  /* =====================================================================
+     Versión web (GitHub Pages): sin backend.
+     - Sin clave: las preguntas sugeridas reproducen grabaciones reales (demo.json)
+       del sistema completo en Python (LangGraph + ChromaDB + MCP + Groq).
+     - Con la clave de Groq del visitante: el mismo grafo de app/grafo.py corre
+       aquí, en el navegador; la búsqueda es BM25 sobre los mismos docs/*.md
+       (sustituye a ChromaDB + servidor MCP, que necesitan Python).
+     ===================================================================== */
+  const CLAVE_SESION = "pasaporte-groq";
+  const leerClave = () => { try { return sessionStorage.getItem(CLAVE_SESION) || ""; } catch { return Web.claveMemoria; } };
+  const guardarClave = (v) => { Web.claveMemoria = v; try { v ? sessionStorage.setItem(CLAVE_SESION, v) : sessionStorage.removeItem(CLAVE_SESION); } catch {} };
+
+  function activarModoWeb() {
+    modo = "web";
+    const caja = $("#clave");
+    caja.hidden = false;
+    const pintarSalud = () => {
+      const activa = !!leerClave();
+      caja.classList.toggle("activa", activa);
+      const el = $("#salud");
+      el.classList.remove("mal"); el.classList.add("ok");
+      el.lastElementChild.textContent = activa ? `web · Groq en tu navegador · ${Web.MODELO}` : "web · demo con respuestas grabadas";
+      el.title = "Versión web sin servidor. La versión completa (Python, ChromaDB, MCP) está en el repositorio.";
+    };
+    $("#clave-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = $("#clave-input").value.trim();
+      $("#clave-input").value = "";
+      if (v) { guardarClave(v); pintarSalud(); }
+    });
+    $("#clave-quitar").addEventListener("click", () => { guardarClave(""); pintarSalud(); });
+    pintarSalud();
+  }
+
+  const Web = {
+    MODELO: "openai/gpt-oss-120b",
+    MAX_PASOS: 5,
+    claveMemoria: "",
+    _docs: null,
+    _demo: null,
+
+    explicar(e) {
+      const t = String(e?.message || e);
+      if (e?.estado === 401) return "La clave de Groq no es válida. Revísala en console.groq.com/keys.";
+      if (e?.estado === 429) return "Límite por minuto del plan gratuito de Groq (429). Espera unos segundos y repite.";
+      if (e instanceof TypeError) return "No se pudo conectar con Groq. Revisa tu conexión a internet.";
+      return t.slice(0, 400);
+    },
+
+    /* ---------- punto de entrada ---------- */
+    async preguntar(texto, historial, emitir) {
+      const grabacion = await this.buscarGrabacion(texto);
+      if (grabacion && !historial.length) return this.reproducir(grabacion, emitir);
+      if (!leerClave()) {
+        emitir("respuesta", { fuentes: [], texto:
+          "En la versión web sin clave solo están grabadas las **cuatro preguntas sugeridas**.\n\n" +
+          "Para preguntar lo que quieras, pega arriba una clave gratuita de Groq (console.groq.com/keys): " +
+          "el grafo se ejecutará en tu navegador. También puedes descargar el proyecto y arrancarlo con `iniciar.bat`." });
+        return;
+      }
+      return this.grafo(texto, historial, emitir);
+    },
+
+    /* ---------- demo grabada ---------- */
+    normalizar: (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim(),
+    async buscarGrabacion(texto) {
+      if (!this._demo) {
+        try { this._demo = await fetch(new URL("demo.json", location.href)).then(r => r.json()); }
+        catch { this._demo = { grabaciones: [] }; }
+      }
+      const n = this.normalizar(texto);
+      return this._demo.grabaciones.find(g => this.normalizar(g.pregunta) === n);
+    },
+    async reproducir(grabacion, emitir) {
+      const espera = (ms) => new Promise(r => setTimeout(r, ms));
+      let anterior = 0;
+      for (const ev of grabacion.eventos) {
+        const hueco = (ev.t - anterior) * 1000;
+        anterior = ev.t;
+        await espera(Math.min(hueco, ev.tipo === "token" ? 25 : 1200));
+        emitir(ev.tipo, ev.datos);
+      }
+    },
+
+    /* ---------- RAG en el navegador: trocear + BM25 (sustituye a ChromaDB) ---------- */
+    PARADAS: new Set("de la el en y a los las del que se con por para un una es al lo como su sus o mas hay son esta este cada si no le ya muy sin sobre entre me mi cuanto cuantos que cual".split(" ")),
+    tokens(t) {
+      return (this.normalizar(t).match(/[a-z0-9]+/g) || [])
+        .filter(w => w.length > 1 && !this.PARADAS.has(w))
+        .map(w => (w.length > 4 && w.endsWith("s") ? w.slice(0, -1) : w));
+    },
+    trocear(texto, fuente, max = 500) {
+      const trozos = [];
+      let actual = "", titulo = "";
+      const cerrar = () => { if (actual.trim()) trozos.push({ fuente, texto: actual.trim(), toks: this.tokens(titulo + " " + actual) }); actual = ""; };
+      for (const bloque of texto.split(/\n\s*\n/)) {
+        const b = bloque.trim();
+        if (!b) continue;
+        if (/^#{1,3}\s/.test(b)) { cerrar(); titulo = b.replace(/^#+\s*/, ""); actual = b; continue; }
+        const piezas = b.length > max ? b.split(/\n|(?<=\.)\s+/) : [b];
+        for (const p of piezas) {
+          if (actual && (actual + "\n\n" + p).length > max) { cerrar(); actual = p; }
+          else actual = actual ? actual + "\n\n" + p : p;
+        }
+      }
+      cerrar();
+      return trozos;
+    },
+    async cargarDocs() {
+      if (this._docs) return this._docs;
+      const nombres = ["normativa_intercambio.md", "guia_alojamiento.md", "faq_llegada.md"];
+      const textos = await Promise.all(nombres.map(n => fetch(new URL("../docs/" + n, location.href)).then(r => {
+        if (!r.ok) throw new Error(`No se pudo leer docs/${n}`);
+        return r.text();
+      })));
+      const trozos = textos.flatMap((t, i) => this.trocear(t, nombres[i]));
+      const df = new Map();
+      trozos.forEach(c => new Set(c.toks).forEach(w => df.set(w, (df.get(w) || 0) + 1)));
+      const media = trozos.reduce((s, c) => s + c.toks.length, 0) / trozos.length;
+      return (this._docs = { trozos, df, media });
+    },
+    async buscar_documentos({ consulta, k = 4 }) {
+      const { trozos, df, media } = await this.cargarDocs();
+      const N = trozos.length, q = this.tokens(String(consulta || ""));
+      const puntuar = (c) => q.reduce((s, w) => {
+        const f = c.toks.filter(x => x === w).length;
+        if (!f) return s;
+        const idf = Math.log(1 + (N - df.get(w) + 0.5) / (df.get(w) + 0.5));
+        return s + idf * (f * 2.5) / (f + 1.5 * (0.25 + 0.75 * c.toks.length / media));
+      }, 0);
+      return trozos.map(c => [puntuar(c), c]).sort((a, b) => b[0] - a[0]).slice(0, k)
+        .map(([, c]) => `[Fuente: ${c.fuente}]\n${c.texto}`).join("\n\n");
+    },
+
+    /* ---------- herramientas de la calculadora (copia de app/herramientas.py) ---------- */
+    TABLA: [[9, "A", 4.0, 9.5], [8, "A-", 3.7, 8.5], [7, "B+", 3.3, 7.5], [6, "B", 3.0, 6.5], [5, "C", 2.0, 5.5], [0, "F", 0.0, 2.5]],
+    convertir_creditos({ creditos, origen, destino, factor = 2 }) {
+      origen = String(origen).trim().toUpperCase(); destino = String(destino).trim().toUpperCase();
+      if (new Set([origen, destino]).size !== 2 || ![origen, destino].every(x => x === "ECTS" || x === "US"))
+        return "origen y destino deben ser 'ECTS' y 'US' (uno de cada).";
+      const r = origen === "US" ? creditos * factor : creditos / factor;
+      return `${creditos} créditos ${origen} = ${+r.toFixed(2)} ${destino} (factor 1 US = ${factor} ECTS)`;
+    },
+    convertir_nota({ nota, escala_origen = "ES" }) {
+      const e = String(escala_origen).trim().toUpperCase();
+      if (["ES", "ESPAÑOLA", "ESPANOLA", "10"].includes(e)) {
+        if (!(nota >= 0 && nota <= 10)) return "La nota española debe estar entre 0 y 10.";
+        const [, letra, gpa] = this.TABLA.find(([min]) => nota >= min);
+        return `${nota}/10 = ${letra} (GPA ${gpa.toFixed(1)}) en Lakeshore`;
+      }
+      if (["GPA", "US", "LAKESHORE"].includes(e)) {
+        if (!(nota >= 0 && nota <= 4)) return "El GPA debe estar entre 0 y 4.";
+        const [, letra, , medio] = this.TABLA.find(([, , gpa]) => nota >= gpa);
+        return `GPA ${nota} = ${letra} = ${medio}/10 en la universidad de origen`;
+      }
+      return "escala_origen debe ser 'ES' (sobre 10) o 'GPA' (sobre 4).";
+    },
+    presupuesto_mensual({ alquiler, comida = 0, transporte = 0, seguro = 0, otros = 0, meses = 5 }) {
+      const m = [alquiler, comida, transporte, seguro, otros].reduce((s, x) => s + Number(x || 0), 0);
+      const f = (x) => x.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return `Mensual: ${f(m)} $ (alquiler ${alquiler} + comida ${comida} + transporte ${transporte} + seguro ${seguro} + otros ${otros}). Total ${meses} meses: ${f(m * meses)} $`;
+    },
+
+    /* esquemas que ve el LLM (los mismos docstrings que en Python) */
+    get HERRAMIENTAS() {
+      const num = { type: "number" }, txt = { type: "string" };
+      const def = (name, description, properties, required) => ({ type: "function", function: { name, description, parameters: { type: "object", properties, required } } });
+      return {
+        documentalista: [def("buscar_documentos",
+          "Busca en los documentos del intercambio en Lakeshore University: normativa (créditos, conversión ECTS/US, notas, learning agreement, plazos, idioma), guía de alojamiento (residencias, precios, fianzas, barrios, transporte) y preguntas frecuentes de llegada (visado, seguro médico, banco, móvil, comida). Devuelve los k fragmentos más parecidos, cada uno con su fichero fuente.",
+          { consulta: txt, k: { type: "integer" } }, ["consulta"])],
+        calculadora: [
+          def("convertir_creditos", "Convierte créditos entre ECTS y créditos US de Lakeshore University. origen y destino: \"ECTS\" o \"US\". factor: ECTS que vale 1 crédito US (la normativa fija 2.0; cámbialo solo si los documentos dan otro).",
+            { creditos: num, origen: txt, destino: txt, factor: num }, ["creditos", "origen", "destino"]),
+          def("convertir_nota", "Convierte notas con la tabla de la normativa de Lakeshore University. escala_origen=\"ES\": nota española sobre 10 -> letra y GPA de Lakeshore. escala_origen=\"GPA\": GPA de Lakeshore (0 a 4) -> nota española (punto medio del tramo).",
+            { nota: num, escala_origen: txt }, ["nota"]),
+          def("presupuesto_mensual", "Suma los gastos mensuales (en $) y calcula el total del periodo. Pasa todos los gastos que conozcas; los que no se sepan valen 0. seguro: cuota MENSUAL (si el documento da el coste por semestre, divídelo entre los meses). meses: duración del periodo (un semestre cuenta como 5).",
+            { alquiler: num, comida: num, transporte: num, seguro: num, otros: num, meses: { type: "integer" } }, ["alquiler"]),
+        ],
+      };
+    },
+
+    /* prompts: copia de app/agentes.py y app/grafo.py */
+    PROMPTS: {
+      documentalista: "Eres el documentalista del intercambio en Lakeshore University. Busca SIEMPRE con tu herramienta buscar_documentos (puedes hacer varias búsquedas si el encargo pide varias cosas) y responde solo con lo que digan los documentos, copiando las cifras exactas y citando entre paréntesis el fichero de la fuente, por ejemplo (guia_alojamiento.md). Si no está en los documentos, dilo.",
+      calculadora: "Eres la calculadora del intercambio. Haz las cuentas SIEMPRE con tus herramientas (convertir_creditos, convertir_nota, presupuesto_mensual), nunca de cabeza, y explica cada resultado en una frase con sus números.",
+      supervisor: `Eres el supervisor de Pasaporte, el copiloto de un intercambio
+universitario en Lakeshore University (universidad ficticia).
+No respondes al estudiante: decides qué especialista actúa.
+- documentalista: busca en la normativa de intercambio (créditos mínimos y máximos,
+  factor ECTS/US, tabla de notas, learning agreement, plazos, idioma), la guía de
+  alojamiento (residencias, precios, fianzas, barrios, transporte) y las preguntas
+  frecuentes de llegada (visado, seguro médico, banco, móvil, comida).
+- calculadora: convierte créditos ECTS <-> US, convierte notas españolas a GPA/letra
+  y calcula presupuestos mensuales y del semestre.
+Si un cálculo necesita datos de los documentos (factor de conversión, créditos mínimos,
+precios de alojamiento, coste del seguro, comida, transporte, meses del semestre),
+pide primero TODOS esos datos al documentalista en un solo encargo y luego pasa los
+números concretos a la calculadora en un solo encargo.
+No repitas un encargo que ya aparece en la información recogida.
+Información recogida hasta ahora:
+{hallazgos}
+Si ya hay información suficiente, o la pregunta no trata del intercambio, responde FIN.`,
+      respuesta: `Eres Pasaporte, el copiloto del intercambio en Lakeshore University.
+Responde al estudiante en español, con claridad y brevedad, usando SOLO esta información:
+{hallazgos}
+Cita SIEMPRE las fuentes por el nombre del fichero entre paréntesis, por ejemplo
+(normativa_intercambio.md), justo detrás del dato que sale de cada una.
+Si no hay información suficiente, o la pregunta no trata del intercambio, dilo.`,
+    },
+
+    /* ---------- llamada a Groq (API compatible con OpenAI) ---------- */
+    async groq(cuerpo) {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${leerClave()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: this.MODELO, ...cuerpo }),
+      });
+      if (!r.ok) {
+        let msg = `Groq ${r.status}`;
+        try { msg += ": " + (await r.json()).error.message; } catch {}
+        throw Object.assign(new Error(msg), { estado: r.status });
+      }
+      return cuerpo.stream ? r : r.json();
+    },
+
+    /* agente = LLM + instrucciones + herramientas en bucle (como create_agent) */
+    async agente(nombre, tarea) {
+      const msgs = [{ role: "system", content: this.PROMPTS[nombre] }, { role: "user", content: tarea }];
+      const fuentesBusqueda = [];
+      const permitidas = new Set(this.HERRAMIENTAS[nombre].map(h => h.function.name));
+      for (let i = 0; i < 8; i++) {
+        const m = (await this.groq({ messages: msgs, tools: this.HERRAMIENTAS[nombre], tool_choice: "auto", temperature: 0 })).choices[0].message;
+        if (!m.tool_calls?.length) return { texto: m.content || "", fuentesBusqueda };
+        msgs.push({ role: "assistant", content: m.content || null, tool_calls: m.tool_calls });
+        for (const c of m.tool_calls) {
+          let salida;
+          try {
+            if (!permitidas.has(c.function.name)) throw new Error("herramienta no disponible");
+            salida = String(await this[c.function.name](JSON.parse(c.function.arguments || "{}")));
+          }
+          catch (e) { salida = `Error al ejecutar ${c.function.name}: ${e.message}`; }
+          fuentesBusqueda.push(...(salida.match(/\b[\w-]+\.md\b/g) || []));
+          msgs.push({ role: "tool", tool_call_id: c.id, content: salida });
+        }
+      }
+      return { texto: "No he podido terminar el encargo.", fuentesBusqueda };
+    },
+
+    /* ---------- el grafo: supervisor -> especialistas -> responder ---------- */
+    async grafo(texto, historial, emitir) {
+      const conversacion = [...historial.slice(-6).map(t => ({ role: t.rol === "usuario" ? "user" : "assistant", content: t.texto })),
+        { role: "user", content: texto }];
+      const hallazgos = [], fuentes = [];
+      const recogido = () => hallazgos.join("\n") || "Ninguna todavía.";
+      const DECISION = { type: "function", function: { name: "Decision", description: "Respuesta estructurada del supervisor.", parameters: {
+        type: "object", required: ["siguiente", "tarea"], properties: {
+          siguiente: { type: "string", enum: ["documentalista", "calculadora", "FIN"], description: "Quién actúa ahora, o FIN si ya hay información suficiente." },
+          tarea: { type: "string", description: "Encargo completo, con los datos. Vacío si FIN." } } } } };
+
+      for (;;) {
+        let decision = { siguiente: "FIN", tarea: "" };
+        if (hallazgos.length < this.MAX_PASOS) {
+          const m = (await this.groq({
+            messages: [{ role: "system", content: this.PROMPTS.supervisor.replace("{hallazgos}", recogido()) }, ...conversacion],
+            tools: [DECISION], tool_choice: { type: "function", function: { name: "Decision" } }, temperature: 0,
+          })).choices[0].message;
+          decision = JSON.parse(m.tool_calls[0].function.arguments);
+          if (!["documentalista", "calculadora"].includes(decision.siguiente)) decision = { siguiente: "FIN", tarea: "" };
+        }
+        emitir("decision", decision);
+        emitir("nodo", { nodo: "supervisor" });
+        if (decision.siguiente === "FIN") break;
+
+        const nombre = decision.siguiente;
+        let hallazgo, nuevas = [];
+        try {
+          const r = await this.agente(nombre, decision.tarea);
+          hallazgo = r.texto;
+          if (nombre === "documentalista") {
+            nuevas = hallazgo.match(/\b[\w-]+\.md\b/g) || r.fuentesBusqueda;
+            nuevas = [...new Set(nuevas)];
+            if (nuevas.length && !/\b[\w-]+\.md\b/.test(hallazgo)) hallazgo += ` (fuentes: ${nuevas.join(", ")})`;
+          }
+        } catch (e) {
+          if (e?.estado === 401 || e?.estado === 429) throw e;
+          hallazgo = `No pude completar el encargo (${e.message.slice(0, 80)}).`;
+        }
+        hallazgos.push(`[${nombre}] ${hallazgo}`);
+        emitir("hallazgo", { nodo: nombre, texto: hallazgo });
+        if (nuevas.length) { fuentes.push(...nuevas.filter(f => !fuentes.includes(f))); emitir("fuentes", { nodo: nombre, fuentes: nuevas }); }
+        emitir("nodo", { nodo: nombre });
+      }
+
+      // responder: tokens en streaming desde Groq
+      const r = await this.groq({ stream: true, temperature: 0.2,
+        messages: [{ role: "system", content: this.PROMPTS.respuesta.replace("{hallazgos}", recogido()) }, ...conversacion] });
+      const lector = r.body.getReader(), dec = new TextDecoder();
+      let bufer = "", final = "";
+      for (;;) {
+        const { value, done } = await lector.read();
+        if (done) break;
+        bufer += dec.decode(value, { stream: true });
+        const lineas = bufer.split("\n"); bufer = lineas.pop();
+        for (const l of lineas) {
+          if (!l.startsWith("data: ") || l === "data: [DONE]") continue;
+          const trozo = JSON.parse(l.slice(6)).choices?.[0]?.delta?.content;
+          if (trozo) { final += trozo; emitir("token", { texto: trozo }); }
+        }
+      }
+      emitir("nodo", { nodo: "responder" });
+      const citadas = [...new Set([...(final.match(/\b[\w-]+\.md\b/g) || []), ...fuentes])];
+      emitir("respuesta", { texto: final, fuentes: citadas });
+    },
+  };
 })();
 </script>
 </body>

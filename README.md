@@ -1,18 +1,7 @@
----
-title: Pasaporte
-emoji: 🛂
-colorFrom: red
-colorTo: blue
-sdk: docker
-app_port: 7860
-pinned: false
-short_description: Copiloto de intercambio con LangGraph, RAG y MCP
----
-
 # Pasaporte · copiloto de intercambio universitario
 
-> **Pruébalo sin instalar nada:** <https://huggingface.co/spaces/manucamposgv/pasaporte>
-> (la primera carga puede tardar un minuto si el Space estaba dormido).
+> **Pruébalo sin instalar nada:** <https://manucamposgv.github.io/Pasaporte/>
+> Las cuatro preguntas sugeridas muestran respuestas reales grabadas del sistema completo. Para hacer tus propias preguntas, pega una clave gratuita de Groq en la página: se queda en tu navegador (ver «Versión web en GitHub Pages»).
 
 ## Qué es
 
@@ -90,7 +79,9 @@ pasaporte/
 │   ├── grafo.py                  # supervisor y flujo con LangGraph
 │   └── simulado.py               # SOLO pruebas: LLM y embeddings simulados
 ├── web/
-│   └── index.html                # la web (HTML + CSS + JS, sin build)
+│   ├── index.html                # la web (HTML + CSS + JS, sin build); modo servidor o modo web
+│   └── demo.json                 # respuestas reales grabadas para la versión de GitHub Pages
+├── index.html                    # GitHub Pages: redirige a web/
 ├── server.py                     # FastAPI: GET /, GET /api/salud, POST /api/chat (SSE)
 ├── iniciar.bat                   # Windows: instala, hace la ingesta y abre la web
 ├── Dockerfile                    # imagen para Hugging Face Spaces (puerto 7860)
@@ -224,6 +215,7 @@ Las respuestas simuladas son mecánicas: sirven para comprobar que todo está co
 | Aparecen textos de documentos ya borrados | La ingesta añade y sobrescribe, pero no borra | Borra `chroma_db/` y repite la ingesta |
 | La primera ejecución tarda mucho | Se descarga el modelo de embeddings (unos 220 MB) | Solo ocurre una vez; luego queda en caché |
 | Error 429 | Límite por minuto del plan gratuito de Groq | Espera unos segundos y repite |
+| Error 429 con «tokens per day (TPD)» | Límite diario del plan gratuito (200 000 tokens con `gpt-oss-120b`; una pregunta combinada gasta varios miles) | Espera a que se libere o usa otro modelo en `MODELO`, por ejemplo `groq:openai/gpt-oss-20b` |
 | `404 model_not_found` (p. ej., con `llama-3.3-70b-versatile`) | Groq ha retirado ese modelo o tu cuenta no tiene acceso | Pon en `.env` un modelo de tu lista, p. ej. `MODELO=groq:openai/gpt-oss-120b` (ver «Versiones probadas») |
 | `400 tool_use_failed` | El modelo pidió una herramienta con argumentos que no encajan en su esquema | El grafo lo anota como hallazgo y sigue; si se repite, prueba otro modelo |
 | El supervisor repite pasos | No ve suficiente información para terminar | `MAX_PASOS` lo corta; mejora el prompt del supervisor |
@@ -236,21 +228,24 @@ Las respuestas simuladas son mecánicas: sirven para comprobar que todo está co
 | Los cambios en `docs/` no se ven en la web | El servidor MCP abrió ChromaDB al arrancar | Repite la ingesta y reinicia `uvicorn` |
 | La web carga sin estilos tipográficos | Sin internet no llegan las fuentes de Google Fonts | No afecta al funcionamiento; se usan fuentes del sistema |
 
-## Publicarlo en Hugging Face Spaces
+## Versión web en GitHub Pages
 
-GitHub guarda el código, pero no ejecuta Python. Para tener un enlace que funcione sin instalar nada, el proyecto incluye un `Dockerfile` para [Hugging Face Spaces](https://huggingface.co/spaces) (gratis):
+GitHub Pages solo sirve ficheros estáticos: no puede ejecutar Python. Por eso `web/index.html` tiene dos modos y elige solo:
 
-1. Crea un Space en <https://huggingface.co/new-space> con **SDK: Docker** (plantilla *Blank*) y hardware gratuito (*CPU basic*).
-2. En el Space, **Settings → Variables and secrets**:
-   - **New secret**: `GROQ_API_KEY` con tu clave de Groq.
-   - (Opcional) **New variable**: `MODELO` (por defecto `groq:openai/gpt-oss-120b`) y `LIMITE_PREGUNTAS_HORA` (por defecto 30 por visitante; 0 = sin límite).
-3. Sube los ficheros del proyecto al Space (con `git push` o con `hf upload manucamposgv/pasaporte . --repo-type space`). Hugging Face construye la imagen: instala las dependencias, hace la ingesta y arranca `uvicorn` en el puerto 7860.
+| Dónde se abre | Modo | Qué ejecuta |
+|---|---|---|
+| `http://localhost:8000` (con `iniciar.bat` o `uvicorn server:app`) | **servidor** | El sistema completo en Python: LangGraph, ChromaDB, servidor FastMCP y Groq |
+| `https://manucamposgv.github.io/Pasaporte/` (sin backend) | **web** | Sin clave: reproduce `web/demo.json`, respuestas **reales** grabadas del sistema completo para las cuatro preguntas sugeridas. Con la clave de Groq del visitante: el mismo grafo (supervisor, documentalista, calculadora y responder, con los mismos prompts y herramientas) se ejecuta en el navegador; la búsqueda es BM25 sobre los mismos `docs/*.md`, en lugar de ChromaDB + MCP |
 
-El bloque `---` del principio de este README es la configuración que lee Hugging Face (`sdk: docker`, `app_port: 7860`). Como la web es pública y usa tu clave, `server.py` limita las preguntas por visitante y hora.
+La clave del visitante solo se envía a `api.groq.com` y se guarda en `sessionStorage`, así que se borra al cerrar la pestaña. Tu clave del `.env` no se publica nunca.
 
-## Por qué no funciona en GitHub Pages
+Para activar GitHub Pages: en el repositorio, **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` y carpeta `/ (root)` → Save**. En uno o dos minutos la web está en `https://manucamposgv.github.io/Pasaporte/`. El `index.html` de la raíz redirige a `web/`.
 
-La web (`web/index.html`) es HTML estático, pero el chat necesita el backend de Python (`server.py`: el grafo, ChromaDB y el servidor MCP). GitHub guarda y enseña el código; para usar el chatbot hay que clonarlo y arrancarlo en local (`iniciar.bat` o `uvicorn server:app`). Publicar solo `index.html` en GitHub Pages mostraría la página, pero el chat respondería «No se pudo contactar con el servidor».
+Para volver a grabar la demo, arranca el servidor real y guarda los eventos SSE de `/api/chat` de cada pregunta sugerida en `web/demo.json` (formato: `{"grabaciones": [{"pregunta", "eventos": [{"t", "tipo", "datos"}]}]}`).
+
+### Con Docker
+
+El `Dockerfile` arranca el sistema completo en el puerto 7860: `docker build -t pasaporte .` y `docker run -p 7860:7860 -e GROQ_API_KEY=gsk_... pasaporte`. Sirve para cualquier servicio que ejecute contenedores; Hugging Face Spaces lo admite, pero en noviembre de 2026 sus Spaces con Docker piden la suscripción PRO. Como esa web sería pública y usaría tu clave, `server.py` limita las preguntas por visitante y hora (`LIMITE_PREGUNTAS_HORA`, 30 por defecto).
 
 ## Cómo adaptarlo a otro tema
 
